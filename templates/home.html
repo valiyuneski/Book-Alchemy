@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  </head>
+  <body>
+  <h1>Welcome to the Library</h1><br>
+  <a href="{{ url_for('add_author') }}">Add Author</a>
+  <a href="{{ url_for('add_book') }}">Add Book</a><br>
+  <form action="/" method="get">
+    <input type="text" id="search" name="search" placeholder="Search title">
+    <input type="submit" value="Search">
+  </form>
+  <form action="/" method="get">
+    <button type="submit" name="sort_by" value="no_sort">No Sort</button>
+    <button type="submit" name="sort_by" value="title">Sort by Title</button>
+    <button type="submit" name="sort_by" value="author">Sort by Author</button>
+    <button type="submit" name="sort_by" value="publication_year">Sort by Date of Publication</button>
+  </form>
+  {% if request.args.get('success_delete') == 'True' %}
+    <p style="color: green">Book successfully deleted</p>
+  {% endif %}
+  {% if not success %}
+    <p style="color: red">No books were found</p>
+  {% else %}
+    <ul>
+      {% for book in books %}
+      <li>
+        <h3>{{ book.title }} by {{ book.author.name }}</h3>
+        <h4>{{ book.publication_year }}</h4>
+        <form action="{{ url_for('delete_book', book_id=book.id) }}" method="post">
+          <button type="submit">Delete</button>
+        </form>
+      </li>
+      {% endfor %}
+    </ul>
+  {% endif%}
+  </body>
+</html>
