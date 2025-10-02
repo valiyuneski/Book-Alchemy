@@ -2,6 +2,7 @@ import os
 from flask import Flask, render_template, request, redirect, url_for
 from data_models import db, Author, Book
 from sqlalchemy import inspect
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from datetime import datetime
 
 app = Flask(__name__)
@@ -54,6 +55,7 @@ def home():
 
     return render_template('home.html', books=books, success=True)
 
+
 @app.route('/add_author', methods=['GET', 'POST'])
 def add_author():
     """Add a new author to the database."""
@@ -76,11 +78,19 @@ def add_author():
             death_date = datetime.strptime(death_date_str, "%Y-%m-%d").date()
 
         author = Author(name=author_name, birth_date=birth_date, death_date=death_date)
-        db.session.add(author)
-        db.session.commit()
-        return redirect(url_for('add_author', success=True), 302)
+        try:
+            db.session.add(author)
+            db.session.commit()
+            return redirect(url_for('add_author', success=True), 302)
+        except SQLAlchemyError as e:
+            db.session.rollback()
+            return render_template(
+                'add_author.html',
+                error=f"Database error: {str(e)}"
+            )
 
     return render_template('add_author.html')
+
 
 @app.route('/add_book', methods=['GET', 'POST'])
 def add_book():
@@ -142,10 +152,18 @@ def delete_book(book_id):
     #Redirects to the home page after the book is deleted.
 
     book = Book.query.get(book_id)
-    if book:  # Ensure the book exists before attempting to delete
+
+    if not book:
+        # Book not found
+        return redirect(url_for('home', error="Book not found"), 302)
+
+    try:
         db.session.delete(book)
         db.session.commit()
-    return redirect(url_for('home', success_delete=True), 302)
+        return redirect(url_for('home', success_delete=True), 302)
+    except SQLAlchemyError as e:
+        db.session.rollback()
+        return redirect(url_for('home', error=f"Error deleting book: {str(e)}"), 302)
 
 
 if __name__ == '__main__':
