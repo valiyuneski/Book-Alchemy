@@ -1,5 +1,6 @@
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase
+from datetime import date
 
 class Base(DeclarativeBase):
     """Base class for all database models."""
@@ -13,25 +14,22 @@ class Author(db.Model):
     Attributes:
         id (int): Primary key, auto-incremented identifier for the author.
         name (str): Name of the author.
-        birth_date (str): Birth date of the author.
-        death_date (str): Death date of the author (optional).
+        birth_date (Date): Birth date of the author.
+        death_date (Date): Death date of the author (optional).
         books (relationship): Collection of books written by the author.
     """
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     name = db.Column(db.String, nullable=False)
-    birth_date = db.Column(db.String, nullable=False)
-    death_date = db.Column(db.String)
+    birth_date = db.Column(db.Date, nullable=False)
+    death_date = db.Column(db.Date)
     books = db.relationship('Book', backref='author', lazy=True)
 
     def __repr__(self):
-        """Return a string representation of the author for debugging."""
         return f"Author(id={self.id}, name={self.name})"
 
     def __str__(self):
-        """Return a human-readable string representation of the author."""
-        death = self.death_date if self.death_date else ""
-        if death:
-            return f"{self.id}. {self.name} ({self.birth_date} - {death})"
+        if self.death_date:
+            return f"{self.id}. {self.name} ({self.birth_date} - {self.death_date})"
         else:
             return f"{self.id}. {self.name} ({self.birth_date})"
 
@@ -48,8 +46,8 @@ class Book(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     author_id = db.Column(db.Integer, db.ForeignKey('author.id'))
     title = db.Column(db.String, nullable=False)
-    publication_year = db.Column(db.String)
-    isbn = db.Column(db.Integer)
+    publication_year = db.Column(db.Integer)
+    isbn = db.Column(db.String, unique=True, nullable=False)  # enforce uniqueness
 
     def __repr__(self):
         """Return a string representation of the book for debugging."""
