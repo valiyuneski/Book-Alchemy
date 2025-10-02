@@ -138,9 +138,16 @@ def add_book():
             publication_year=publication_year,
             isbn=isbn
         )
-        db.session.add(book)
-        db.session.commit()
-        return redirect(url_for('add_book', success=True), 302)
+        try:
+            db.session.add(book)
+            db.session.commit()
+            return redirect(url_for('add_book', success=True), 302)
+        except SQLAlchemyError as e:
+            db.session.rollback()
+            return render_template(
+                'add_book.html',
+                error=f"Database error: {str(e)}"
+            )
 
     authors = Author.query.all()
     return render_template('add_book.html', authors=authors)
